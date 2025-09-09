@@ -31,3 +31,13 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Arch Linux ###
+.tool-versions
+
+
+### Terraform ###
+
+*.tfstate
+*.tfstate.*
+.terraform/
