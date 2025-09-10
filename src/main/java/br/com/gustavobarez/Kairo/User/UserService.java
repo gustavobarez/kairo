@@ -62,4 +62,32 @@ public class UserService {
         return result;
     }
 
+    public void delete(Long userId) {
+        var user = repository.findById(userId).get();
+        user.setDeletedAt(LocalDateTime.now());
+        repository.save(user);
+    }
+
+    public UpdateUserResponseDTO update(UpdateUserRequestDTO dto, Long userId) {
+        if (dto.username() == null && dto.email() == null) {
+            throw new IllegalArgumentException("Username and Email cannot be null");
+        }
+
+        var user = repository.findById(userId).get();
+        if (dto.username() != null) {
+            user.setUsername(dto.username());
+        }
+        if (dto.email() != null) {
+            user.setEmail(dto.email());
+        }
+
+        user.setUpdatedAt(LocalDateTime.now());
+        
+        repository.save(user);
+
+        UpdateUserResponseDTO response = new UpdateUserResponseDTO(userId, user.getUsername(), user.getEmail());
+
+        return response;
+    }
+
 }
