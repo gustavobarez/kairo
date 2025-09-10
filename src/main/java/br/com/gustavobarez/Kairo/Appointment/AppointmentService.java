@@ -39,7 +39,7 @@ public class AppointmentService {
     }
 
     public InviteAppointmentResponseDTO inviteUserToAppointment(Long appointmentId,
-            InviteAppointmentRequestDTO inviteAppointmentDTO) {
+            InviteAppointmentRequestDTO inviteAppointmentDTO, Long creatorId) {
         if (appointmentId == null) {
             throw new IllegalArgumentException("Appointment ID cannot be null");
         }
@@ -51,6 +51,10 @@ public class AppointmentService {
         var appointment = repository.findById(appointmentId)
                 .orElseThrow(() -> new EntityNotFoundException("Appointment not found with ID: " + appointmentId));
         var users = userRepository.findAllById(inviteAppointmentDTO.usersId());
+
+        if (appointment.getCreator().getId() != creatorId) {
+            throw new IllegalArgumentException("User ID needs to match with Appointment Creator ID");
+        }
 
         for (User user : users) {
             appointment.getParticipants().add(user);

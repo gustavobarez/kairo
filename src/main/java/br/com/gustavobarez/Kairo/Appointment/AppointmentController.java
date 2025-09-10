@@ -43,9 +43,16 @@ public class AppointmentController {
     }
 
     @PostMapping("/{appointmentId}/participants")
-    public ResponseEntity<ApiResponseDTO<InviteAppointmentResponseDTO>> inviteToAppointment(@PathVariable Long appointmentId,
-            @RequestBody InviteAppointmentRequestDTO inviteAppointmentDTO) {
-        var appointment = service.inviteUserToAppointment(appointmentId, inviteAppointmentDTO);
+    public ResponseEntity<ApiResponseDTO<InviteAppointmentResponseDTO>> inviteToAppointment(
+            @PathVariable Long appointmentId,
+            @RequestBody InviteAppointmentRequestDTO inviteAppointmentDTO, HttpServletRequest request) {
+        var userIdAttribute = request.getAttribute("user_id");
+        if (userIdAttribute == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        String userIdStr = userIdAttribute.toString();
+        Long creatorId = Long.parseLong(userIdStr);
+        var appointment = service.inviteUserToAppointment(appointmentId, inviteAppointmentDTO, creatorId);
         var response = new ApiResponseDTO<>(appointment, "invite-to-appointment");
         return ResponseEntity.ok(response);
     }
