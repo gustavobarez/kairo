@@ -23,7 +23,7 @@ public class AppointmentService {
         this.userRepository = userRepository;
     }
 
-    public CreateAppointmentDTO createAppointment(CreateAppointmentDTO dto, Long creatorId) {
+    public AppointmentDTO createAppointment(AppointmentDTO dto, Long creatorId) {
         var user = userRepository.findById(creatorId);
 
         Appointment appointment = Appointment.builder()

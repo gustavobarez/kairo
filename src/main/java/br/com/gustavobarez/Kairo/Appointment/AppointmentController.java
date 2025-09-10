@@ -23,8 +23,8 @@ public class AppointmentController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<ApiResponseDTO<CreateAppointmentDTO>> createAppointment(
-            @Valid @RequestBody CreateAppointmentDTO dto, HttpServletRequest request) {
+    public ResponseEntity<ApiResponseDTO<AppointmentDTO>> createAppointment(
+            @Valid @RequestBody AppointmentDTO dto, HttpServletRequest request) {
 
         Object userIdAttribute = request.getAttribute("user_id");
 
