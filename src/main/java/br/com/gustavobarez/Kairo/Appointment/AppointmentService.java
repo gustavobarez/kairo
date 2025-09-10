@@ -88,4 +88,10 @@ public class AppointmentService {
         return response;
     }
 
+    public void deleteAppointment(Long appointmentId) {
+        var appointment = repository.findById(appointmentId).get();
+        appointment.setDeletedAt(LocalDateTime.now());
+        repository.save(appointment);
+    }
+
 }
