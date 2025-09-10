@@ -3,6 +3,7 @@ package br.com.gustavobarez.Kairo.Appointment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -61,6 +62,14 @@ public class AppointmentController {
     @DeleteMapping("/{appointmentId}/delete")
     public void deleteAppointment(@PathVariable Long appointmentId, HttpServletRequest request) {
         service.deleteAppointment(appointmentId);
+    }
+
+    @PatchMapping("/{appointmentId}/update")
+    public ApiResponseDTO<UpdateAppointmentResponseDTO> updateAppointment(@PathVariable Long appointmentId,
+            @RequestBody UpdateAppointmentRequestDTO dto, HttpServletRequest request) {
+        var appointmentDto = service.updateAppointment(appointmentId, dto);
+        var response = new ApiResponseDTO<>(appointmentDto, "update-appointment");
+        return response;
     }
 
 }
