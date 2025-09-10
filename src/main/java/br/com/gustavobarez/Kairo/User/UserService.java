@@ -48,10 +48,12 @@ public class UserService {
         var participatingAppointments = user.getParticipatingAppointments();
 
         List<AppointmentDTO> createdAppointmentsDTO = createdAppointments.stream()
+                .filter(dto -> dto.getDeletedAt().equals(null))
                 .map(dto -> new AppointmentDTO(dto))
                 .collect(Collectors.toList());
 
         List<AppointmentDTO> participatingAppointmentsDTO = participatingAppointments.stream()
+                .filter(dto -> dto.getDeletedAt().equals(null))
                 .map(dto -> new AppointmentDTO(dto))
                 .collect(Collectors.toList());
 
@@ -82,7 +84,7 @@ public class UserService {
         }
 
         user.setUpdatedAt(LocalDateTime.now());
-        
+
         repository.save(user);
 
         UpdateUserResponseDTO response = new UpdateUserResponseDTO(userId, user.getUsername(), user.getEmail());
