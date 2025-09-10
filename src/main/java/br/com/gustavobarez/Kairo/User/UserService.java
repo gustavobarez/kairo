@@ -1,5 +1,7 @@
 package br.com.gustavobarez.Kairo.User;
 
+import java.time.LocalDateTime;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +27,7 @@ public class UserService {
                 .username(dto.username())
                 .email(dto.email())
                 .password(passwordEncoder.encode(dto.password()))
+                .createdAt(LocalDateTime.now())
                 .build();
 
         repository.save(user);

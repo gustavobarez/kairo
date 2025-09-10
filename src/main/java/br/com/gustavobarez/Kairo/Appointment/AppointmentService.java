@@ -1,5 +1,6 @@
 package br.com.gustavobarez.Kairo.Appointment;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,6 +32,7 @@ public class AppointmentService {
                 .description(dto.description())
                 .startTime(dto.startTime())
                 .endTime(dto.endTime())
+                .createdAt(LocalDateTime.now())
                 .build();
 
         repository.save(appointment);
