@@ -3,8 +3,6 @@ package br.com.gustavobarez.Kairo.User;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import br.com.gustavobarez.Kairo.Appointment.Appointment;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -43,11 +41,9 @@ public class User {
     private String password;
 
     @OneToMany(mappedBy = "creator")
-    @JsonIgnore
     private List<Appointment> createdAppointments = new ArrayList<>();
 
     @ManyToMany(mappedBy = "participants")
-    @JsonIgnore
     private List<Appointment> participatingAppointments = new ArrayList<>();
 
 }

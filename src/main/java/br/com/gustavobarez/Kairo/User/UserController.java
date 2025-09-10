@@ -19,7 +19,7 @@ public class UserController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<ApiResponseDTO<CreateUserDTO>> createUser(@RequestBody  CreateUserDTO dto) {
+    public ResponseEntity<ApiResponseDTO<CreateUserResponseDTO>> createUser(@RequestBody CreateUserRequestDTO dto) {
         var request = service.createUser(dto);
         var response = new ApiResponseDTO<>(request, "create-user");
         return ResponseEntity.ok(response);

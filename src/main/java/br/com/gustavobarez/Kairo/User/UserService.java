@@ -15,7 +15,7 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public CreateUserDTO createUser(CreateUserDTO dto) {
+    public CreateUserResponseDTO createUser(CreateUserRequestDTO dto) {
 
         if (repository.findUserByEmail(dto.email()).isPresent()) {
             throw new IllegalArgumentException("Email already in use");
@@ -29,7 +29,9 @@ public class UserService {
 
         repository.save(user);
 
-        return dto;
+        CreateUserResponseDTO response = new CreateUserResponseDTO(dto.username(), dto.email());
+
+        return response;
     }
 
 }
