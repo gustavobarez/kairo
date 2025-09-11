@@ -11,17 +11,10 @@ provider "aws" {
   region = var.aws_region
 }
 
-# =============================================================================
-# DATA SOURCES - Busca informações da sua conta AWS
-# =============================================================================
-
-# Pega as informações da sua VPC padrão
 data "aws_vpc" "default" {
   default = true
 }
 
-# Pega as sub-redes da VPC padrão, mas filtra APENAS as que são compatíveis
-# com a instância t3.micro, conforme a mensagem de erro da AWS.
 data "aws_subnets" "default" {
   filter {
     name   = "vpc-id"
@@ -34,11 +27,6 @@ data "aws_subnets" "default" {
   }
 }
 
-# =============================================================================
-# IAM ROLES - Permissões para o Elastic Beanstalk (CRUCIAL)
-# =============================================================================
-
-# 1. Função para o serviço do Elastic Beanstalk
 resource "aws_iam_role" "eb_service_role" {
   name = "aws-elasticbeanstalk-service-role"
 
@@ -61,7 +49,6 @@ resource "aws_iam_role_policy_attachment" "eb_service_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSElasticBeanstalkService"
 }
 
-# 2. Perfil de instância para as máquinas EC2
 resource "aws_iam_role" "eb_ec2_role" {
   name = "aws-elasticbeanstalk-ec2-role"
 
@@ -84,15 +71,129 @@ resource "aws_iam_role_policy_attachment" "eb_ec2_webtier" {
   policy_arn = "arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier"
 }
 
+resource "aws_iam_role_policy_attachment" "eb_ec2_cloudwatch" {
+  role       = aws_iam_role.eb_ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
+resource "aws_iam_role_policy" "eb_ec2_cloudwatch_custom" {
+  name = "CloudWatchCustomPolicy"
+  role = aws_iam_role.eb_ec2_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:PutMetricData",
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogGroups",
+          "logs:DescribeLogStreams"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 resource "aws_iam_instance_profile" "eb_instance_profile" {
   name = "aws-elasticbeanstalk-ec2-role"
   role = aws_iam_role.eb_ec2_role.name
 }
 
+resource "aws_cloudwatch_log_group" "kairo_app_logs" {
+  name              = "/aws/elasticbeanstalk/${var.app_name}/application"
+  retention_in_days = 7
+}
 
-# =============================================================================
-# NETWORKING - Grupos de Segurança e Regras
-# =============================================================================
+resource "aws_cloudwatch_log_group" "kairo_performance_logs" {
+  name              = "/aws/elasticbeanstalk/${var.app_name}/performance"
+  retention_in_days = 7
+}
+
+resource "aws_cloudwatch_metric_alarm" "high_cpu" {
+  alarm_name          = "${var.app_name}-high-cpu"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = "300"
+  statistic           = "Average"
+  threshold           = "80"
+  alarm_description   = "CPU utilization is too high"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+
+  dimensions = {
+    AutoScalingGroupName = "${var.app_name}-env"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "high_response_time" {
+  alarm_name          = "${var.app_name}-high-response-time"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "ResponseTime"
+  namespace           = "Kairo/Application"
+  period              = "300"
+  statistic           = "Average"
+  threshold           = "2000"
+  alarm_description   = "Response time is too high (>2s)"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+}
+
+resource "aws_cloudwatch_dashboard" "kairo_dashboard" {
+  dashboard_name = "${var.app_name}-dashboard"
+
+  dashboard_body = jsonencode({
+    widgets = [
+      {
+        type   = "metric"
+        x      = 0
+        y      = 0
+        width  = 12
+        height = 6
+
+        properties = {
+          metrics = [
+            ["AWS/ApplicationELB", "TargetResponseTime", "LoadBalancer", aws_elastic_beanstalk_environment.kairo_env.load_balancers[0]],
+            ["AWS/ApplicationELB", "RequestCount", "LoadBalancer", aws_elastic_beanstalk_environment.kairo_env.load_balancers[0]]
+          ]
+          view    = "timeSeries"
+          stacked = false
+          region  = var.aws_region
+          title   = "Application Performance"
+          period  = 300
+        }
+      },
+      {
+        type   = "metric"
+        x      = 0
+        y      = 6
+        width  = 12
+        height = 6
+
+        properties = {
+          metrics = [
+            ["Kairo/Application", "ResponseTime", "Operation", "statistics"],
+            ["Kairo/Application", "RequestCount", "Operation", "statistics"]
+          ]
+          view    = "timeSeries"
+          stacked = false
+          region  = var.aws_region
+          title   = "Custom Application Metrics"
+          period  = 300
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_sns_topic" "alerts" {
+  name = "${var.app_name}-alerts"
+}
 
 resource "aws_security_group" "rds_sg" {
   name        = "${var.app_name}-rds-sg"
@@ -122,16 +223,12 @@ resource "aws_security_group" "eb_sg" {
 
 resource "aws_security_group_rule" "beanstalk_to_rds" {
   type                     = "ingress"
-  from_port                = 5432 # Porta do PostgreSQL
+  from_port                = 5432
   to_port                  = 5432
   protocol                 = "tcp"
   security_group_id        = aws_security_group.rds_sg.id
   source_security_group_id = aws_security_group.eb_sg.id
 }
-
-# =============================================================================
-# DATABASE - Grupo de Sub-redes e Instância RDS
-# =============================================================================
 
 resource "aws_db_subnet_group" "kairo_subnet_group" {
   name       = "${var.app_name}-subnet-group"
@@ -150,11 +247,32 @@ resource "aws_db_instance" "kairo_db" {
   db_subnet_group_name   = aws_db_subnet_group.kairo_subnet_group.name
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
   skip_final_snapshot    = true
+  monitoring_interval    = 60
+  monitoring_role_arn    = aws_iam_role.rds_enhanced_monitoring.arn
+  enabled_cloudwatch_logs_exports = ["postgresql"]
 }
 
-# =============================================================================
-# ELASTIC BEANSTALK - Aplicação e Ambiente
-# =============================================================================
+resource "aws_iam_role" "rds_enhanced_monitoring" {
+  name = "${var.app_name}-rds-monitoring-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "monitoring.rds.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "rds_enhanced_monitoring" {
+  role       = aws_iam_role.rds_enhanced_monitoring.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
+}
 
 resource "aws_elastic_beanstalk_application" "kairo_app" {
   name        = var.app_name
@@ -166,12 +284,8 @@ resource "aws_elastic_beanstalk_environment" "kairo_env" {
   application         = aws_elastic_beanstalk_application.kairo_app.name
   solution_stack_name = "64bit Amazon Linux 2023 v4.6.4 running Corretto 21"
 
-  # Depende explicitamente da criação da regra de SG para garantir a ordem
   depends_on = [aws_security_group_rule.beanstalk_to_rds]
 
-  # --- Configurações do Ambiente ---
-
-  # Associa as Funções IAM criadas (resolve o erro 'Instance Profile')
   setting {
     namespace = "aws:elasticbeanstalk:environment"
     name      = "ServiceRole"
@@ -184,7 +298,6 @@ resource "aws_elastic_beanstalk_environment" "kairo_env" {
     value     = aws_iam_instance_profile.eb_instance_profile.name
   }
 
-  # Configura a rede (VPC e Sub-redes filtradas)
   setting {
     namespace = "aws:ec2:vpc"
     name      = "VPCId"
@@ -196,21 +309,42 @@ resource "aws_elastic_beanstalk_environment" "kairo_env" {
     value     = join(",", data.aws_subnets.default.ids)
   }
 
-  # Configura o Grupo de Segurança
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
     name      = "SecurityGroups"
     value     = aws_security_group.eb_sg.id
   }
 
-  # Configura o tipo de instância
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
     name      = "InstanceType"
     value     = "t3.micro"
   }
 
-  # Variáveis de ambiente para a aplicação Spring Boot
+  setting {
+    namespace = "aws:elasticbeanstalk:cloudwatch:logs"
+    name      = "StreamLogs"
+    value     = "true"
+  }
+
+  setting {
+    namespace = "aws:elasticbeanstalk:cloudwatch:logs"
+    name      = "DeleteOnTerminate"
+    value     = "true"
+  }
+
+  setting {
+    namespace = "aws:elasticbeanstalk:cloudwatch:logs"
+    name      = "RetentionInDays"
+    value     = "7"
+  }
+
+  setting {
+    namespace = "aws:elasticbeanstalk:healthreporting:system"
+    name      = "SystemType"
+    value     = "enhanced"
+  }
+
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
     name      = "SPRING_DATASOURCE_URL"
@@ -235,5 +369,20 @@ resource "aws_elastic_beanstalk_environment" "kairo_env" {
     namespace = "aws:elasticbeanstalk:application:environment"
     name      = "SERVER_PORT"
     value     = "5000"
+  }
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name      = "AWS_REGION"
+    value     = var.aws_region
+  }
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name      = "CLOUDWATCH_LOG_GROUP"
+    value     = aws_cloudwatch_log_group.kairo_app_logs.name
+  }
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name      = "CLOUDWATCH_PERFORMANCE_LOG_GROUP"
+    value     = aws_cloudwatch_log_group.kairo_performance_logs.name
   }
 }
