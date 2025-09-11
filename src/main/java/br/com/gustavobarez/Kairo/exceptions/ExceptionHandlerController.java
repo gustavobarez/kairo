@@ -15,9 +15,6 @@ import jakarta.persistence.EntityNotFoundException;
 @ControllerAdvice
 public class ExceptionHandlerController {
 
-    public ExceptionHandlerController() {
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<List<ErrorMessageDTO>> handleMethodArgumentNotValidException(
             MethodArgumentNotValidException e) {
