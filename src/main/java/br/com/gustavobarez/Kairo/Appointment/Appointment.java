@@ -17,7 +17,6 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -41,16 +40,12 @@ public class Appointment {
     @JoinColumn(name = "creator_id", nullable = false)
     private User creator;
 
-    @NotNull
     private String title;
 
-    @NotNull
     private String description;
 
-    @NotNull
     private LocalDateTime startTime;
 
-    @NotNull
     private LocalDateTime endTime;
 
     @Column(name = "created_at")
