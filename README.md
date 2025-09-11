@@ -4,18 +4,18 @@
 ![SPRING_BADGE](https://img.shields.io/badge/spring-%236DB33F.svg?style=for-the-badge&logo=spring&logoColor=white)
 ![AWS_BADGE](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)
 ![DOCKER_COMPOSE](https://img.shields.io/badge/Docker%20Compose-%231d63ed.svg?style=for-the-badge&logo=docker&logoColor=white)
-![GRAFANA_BADGE](https://img.shields.io/badge/GRAFANA-f9b90f.svg?style=for-the-badge&logo=grafana&logoColor=white)
-![PROMETHEUS_BADGE](https://img.shields.io/badge/Prometheus-e6522c.svg?style=for-the-badge&logo=prometheus&logoColor=white)
 ![TERRAFORM](https://img.shields.io/badge/Terraform-%23623ce4.svg?style=for-the-badge&logo=terraform&logoColor=white)
 
-This project is an investment portfolio management API, built with Java 21 and Spring Boot 3.5. The API allows users to manage their financial assets, record transactions, and track their investment performance.
+This project is an appointment scheduling API, built with Java 21 and Spring Boot 3.5. The API allows users to create accounts, manage their profiles, and organize their appointments efficiently.
 
 ---
 
 ## 🚀 Features
 
-- Portfolio Management: Specialized endpoints for portfolio analysis and client management.
-- Real-time Calculation: On-demand calculation of the user's consolidated Position, reflecting quantity, average price, and total value based on current quotations.
+- User Management: Specialized endpoints for creating, updating, and deleting user accounts.
+- Appointment System: Create, update, delete, and list appointments with support for invitations and participants.
+- Secure Authentication: JWT-based login system for route protection and sensitive data security.
+- Health Monitoring: Application health endpoints and statistics for system monitoring.
 - API Documentation: Interactive API exploration and documentation provided by Swagger UI (OpenAPI).
 - Containerization: Ready to deploy using Docker, with a multi-stage Dockerfile for optimized images.
 
@@ -68,13 +68,6 @@ For more information on Docker and Docker Compose, refer to the official documen
 - [Docker](https://docs.docker.com/)
 - [Docker Compose](https://docs.docker.com/compose/)
 
-## 🧪 Testing
-
-### Run Backend Tests
-```bash
-./mvnw test
-```
-
 ## 🛠️ Used Tools
 
 This project uses the following tools:
@@ -82,10 +75,31 @@ This project uses the following tools:
 - [Java](https://docs.oracle.com/en/java/javase/21/) for backend development
 - [Spring Boot](https://docs.spring.io/spring-boot/index.html) framework for building APIs
 - [Docker](https://docs.docker.com/) for containerization
+- [Terraform](https://developer.hashicorp.com/terraform/docs) for IAC
 - [Swagger](https://swagger.io/) for API documentation and testing
 
 ## 💻 Usage
 
-After the API is running, you can use the Swagger UI to interact with the available endpoints for portfolio analysis, client queries, and asset quotations. The API can be accessed at `http://localhost:$PORT/swagger/index.html`.
+After the API is running, you can use the Swagger UI to interact with the available endpoints for user and appointments. The API can be accessed at `http://localhost:$PORT/swagger/index.html`.
 
 Default $PORT if not provided=8080.
+
+## 🤝 Contributing
+
+To contribute to this project, please follow these guidelines:
+
+1. Fork the repository
+2. Create a new branch: `git checkout -b feature/your-feature-name`
+3. Make your changes and commit them using Conventional Commits
+4. Push to the branch: `git push origin feature/your-feature-name`
+5. Submit a pull request
+
+---
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE.md file for details.
+
+## ❤️ Credits
+
+This project was created by [Gustavo Barez](https://github.com/gustavobarez).
