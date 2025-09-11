@@ -25,7 +25,7 @@ public class SecurityUserFilter extends OncePerRequestFilter {
     }
 
     private static final List<String> PUBLIC_ENDPOINTS = Arrays.asList(
-            "/api/v1/user/create",
+            "/api/v1/user",
             "/api/v1/auth",
             "/swagger-ui",
             "/v3/api-docs",
