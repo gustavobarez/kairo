@@ -1,0 +1,202 @@
+# POST http://kairo-env.eba-57bhc3i7.us-east-1.elasticbeanstalk.com/api/v1/user/create HTTP/1.1
+# content-type: application/json
+
+# {
+# "username": "Gustavoo",
+# "email": "teste@gmail.com",
+# "password": "senha1234"
+# }
+
+### CLOUD - 1. Criar um novo usuário
+POST http://kairo-env.eba-57bhc3i7.us-east-1.elasticbeanstalk.com/api/v1/user/create HTTP/1.1
+Content-Type: application/json
+
+{
+"username": "Gustavoo",
+"email": "teste2@gmail.com",
+"password": "senha"
+}
+
+### CLOUD - 2. Autenticar e obter o Token JWT
+# @name cloudLoginRequest
+POST http://kairo-env.eba-57bhc3i7.us-east-1.elasticbeanstalk.com/api/v1/auth/login HTTP/1.1
+Content-Type: application/json
+
+{
+"email": "teste2@gmail.com",
+"password": "senha"
+}
+
+### CLOUD - 3. Criar um novo agendamento (Requer Autenticação)
+POST http://kairo-env.eba-57bhc3i7.us-east-1.elasticbeanstalk.com/api/v1/appointment/create HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{cloudLoginRequest.response.body.data.access_token}}
+
+{
+"title": "Consulta médica",
+"description": "Retorno anual com o cardiologista",
+"startTime": "2025-09-15T14:00:00",
+"endTime": "2025-09-15T15:00:00"
+}
+
+### CLOUD - 4. Adicionar usuarios no agendamento (Requer Autenticação)
+POST http://kairo-env.eba-57bhc3i7.us-east-1.elasticbeanstalk.com/api/v1/appointment/15/participants HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{cloudLoginRequest.response.body.data.access_token}}
+
+{
+"usersId": [2]
+}
+
+### CLOUD - 5. Lista appointments (Requer Autenticação)
+GET http://kairo-env.eba-57bhc3i7.us-east-1.elasticbeanstalk.com/api/v1/user/2/appointments HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{cloudLoginRequest.response.body.data.access_token}}
+
+{
+}
+
+### CLOUD - 6. Delete Appointment (Requer Autenticação)
+DELETE http://kairo-env.eba-57bhc3i7.us-east-1.elasticbeanstalk.com/api/v1/appointment/2/delete HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{cloudLoginRequest.response.body.data.access_token}}
+
+{
+}
+
+### CLOUD - 7. Delete Usuario (Requer Autenticação)
+DELETE http://kairo-env.eba-57bhc3i7.us-east-1.elasticbeanstalk.com/api/v1/user HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{cloudLoginRequest.response.body.data.access_token}}
+
+{
+}
+
+### CLOUD - 8. Update Usuario (Requer Autenticação)
+PATCH http://kairo-env.eba-57bhc3i7.us-east-1.elasticbeanstalk.com/api/v1/user HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{cloudLoginRequest.response.body.data.access_token}}
+
+{
+"username": "Anael"
+}
+
+### CLOUD - 9. Update Appointment (Requer Autenticação)
+PATCH http://kairo-env.eba-57bhc3i7.us-east-1.elasticbeanstalk.com/api/v1/appointment/2/update HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{cloudLoginRequest.response.body.data.access_token}}
+
+{
+"title": "TESTEEEEE"
+}
+
+### CLOUD - 10. Health Check
+GET http://kairo-env.eba-57bhc3i7.us-east-1.elasticbeanstalk.com/health HTTP/1.1
+
+### CLOUD - 11. Readiness Check
+GET http://kairo-env.eba-57bhc3i7.us-east-1.elasticbeanstalk.com/health/ready HTTP/1.1
+
+### CLOUD - 12. Liveness Check
+GET http://kairo-env.eba-57bhc3i7.us-east-1.elasticbeanstalk.com/health/live HTTP/1.1
+
+### CLOUD - 13. Statistics
+GET http://kairo-env.eba-57bhc3i7.us-east-1.elasticbeanstalk.com/statistics HTTP/1.1
+
+### ===============================================
+### LOCAL REQUESTS
+### ===============================================
+
+### 1. Criar um novo usuário
+POST http://localhost:8080/api/v1/user/create HTTP/1.1
+Content-Type: application/json
+
+{
+"username": "Gustavoo",
+"email": "teste3@gmail.com",
+"password": "senha"
+}
+
+### 2. Autenticar e obter o Token JWT
+# @name loginRequest
+POST http://localhost:8080/api/v1/auth/login HTTP/1.1
+Content-Type: application/json
+
+{
+"email": "teste@gmail.com",
+"password": "senha"
+}
+
+### 3. Criar um novo agendamento (Requer Autenticação)
+POST http://localhost:8080/api/v1/appointment/create HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{loginRequest.response.body.data.access_token}}
+
+{
+"title": "Consulta médica",
+"description": "Retorno anual com o cardiologista",
+"startTime": "2025-09-15T14:00:00",
+"endTime": "2025-09-15T15:00:00"
+}
+
+### 4. Adicionar usuarios no agendamento (Requer Autenticação)
+POST http://localhost:8080/api/v1/appointment/15/participants HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{loginRequest.response.body.data.access_token}}
+
+{
+"usersId": [22]
+}
+
+### 5. Lista appointments (Requer Autenticação)
+GET http://localhost:8080/api/v1/user/2/appointments HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{loginRequest.response.body.data.access_token}}
+
+{
+}
+
+### 6. Delete Appointment (Requer Autenticação)
+DELETE http://localhost:8080/api/v1/appointment/2/delete HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{loginRequest.response.body.data.access_token}}
+
+{
+}
+
+### 7. Delete Usuario (Requer Autenticação)
+DELETE http://localhost:8080/api/v1/user HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{loginRequest.response.body.data.access_token}}
+
+{
+}
+
+### 8. Update Usuario (Requer Autenticação)
+PATCH http://localhost:8080/api/v1/user HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{loginRequest.response.body.data.access_token}}
+
+{
+"username": "Anael"
+}
+
+### 9. Update Appointment (Requer Autenticação)
+PATCH http://localhost:8080/api/v1/appointment/15/update HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{loginRequest.response.body.data.access_token}}
+
+{
+"title": "TESTEEEEE"
+}
+
+### 10. Health Check
+GET http://localhost:8080/health HTTP/1.1
+
+### 11. Readiness Check
+GET http://localhost:8080/health/ready HTTP/1.1
+
+### 12. Liveness Check
+GET http://localhost:8080/health/live HTTP/1.1
+
+### 13. Statistics
+GET http://localhost:8080/statistics HTTP/1.1
