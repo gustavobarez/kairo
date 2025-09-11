@@ -29,17 +29,14 @@ public class AppointmentController {
             @Valid @RequestBody AppointmentDTO dto, HttpServletRequest request) {
 
         Object userIdAttribute = request.getAttribute("user_id");
-
         if (userIdAttribute == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         String userIdStr = userIdAttribute.toString();
-
         Long creatorId = Long.parseLong(userIdStr);
 
         var createAppointmentDTO = service.createAppointment(dto, creatorId);
-
         var response = new ApiResponseDTO<>(createAppointmentDTO, "create-appointment");
         return ResponseEntity.ok(response);
     }
@@ -47,29 +44,54 @@ public class AppointmentController {
     @PostMapping("/{appointmentId}/participants")
     public ResponseEntity<ApiResponseDTO<InviteAppointmentResponseDTO>> inviteToAppointment(
             @PathVariable Long appointmentId,
-            @RequestBody InviteAppointmentRequestDTO inviteAppointmentDTO, HttpServletRequest request) {
-        var userIdAttribute = request.getAttribute("user_id");
+            @Valid @RequestBody InviteAppointmentRequestDTO inviteAppointmentDTO,
+            HttpServletRequest request) {
+
+        Object userIdAttribute = request.getAttribute("user_id");
         if (userIdAttribute == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
         String userIdStr = userIdAttribute.toString();
         Long creatorId = Long.parseLong(userIdStr);
+
         var appointment = service.inviteUserToAppointment(appointmentId, inviteAppointmentDTO, creatorId);
         var response = new ApiResponseDTO<>(appointment, "invite-to-appointment");
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{appointmentId}/delete")
-    public void deleteAppointment(@PathVariable Long appointmentId, HttpServletRequest request) {
-        service.deleteAppointment(appointmentId);
+    public ResponseEntity<Void> deleteAppointment(@PathVariable Long appointmentId,
+            HttpServletRequest request) {
+
+        Object userIdAttribute = request.getAttribute("user_id");
+        if (userIdAttribute == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String userIdStr = userIdAttribute.toString();
+        Long userId = Long.parseLong(userIdStr);
+
+        service.deleteAppointment(appointmentId, userId);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{appointmentId}/update")
-    public ApiResponseDTO<UpdateAppointmentResponseDTO> updateAppointment(@PathVariable Long appointmentId,
-            @RequestBody UpdateAppointmentRequestDTO dto, HttpServletRequest request) {
-        var appointmentDto = service.updateAppointment(appointmentId, dto);
-        var response = new ApiResponseDTO<>(appointmentDto, "update-appointment");
-        return response;
-    }
+    public ResponseEntity<ApiResponseDTO<UpdateAppointmentResponseDTO>> updateAppointment(
+            @PathVariable Long appointmentId,
+            @Valid @RequestBody UpdateAppointmentRequestDTO dto,
+            HttpServletRequest request) {
 
+        Object userIdAttribute = request.getAttribute("user_id");
+        if (userIdAttribute == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String userIdStr = userIdAttribute.toString();
+        Long userId = Long.parseLong(userIdStr);
+
+        var appointmentDto = service.updateAppointment(appointmentId, dto, userId);
+        var response = new ApiResponseDTO<>(appointmentDto, "update-appointment");
+        return ResponseEntity.ok(response);
+    }
 }

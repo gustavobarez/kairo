@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.gustavobarez.Kairo.Appointment.AppointmentDTO;
 import br.com.gustavobarez.Kairo.util.ApiResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/user")
@@ -29,43 +30,50 @@ public class UserController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<ApiResponseDTO<CreateUserResponseDTO>> createUser(@RequestBody CreateUserRequestDTO dto) {
+    public ResponseEntity<ApiResponseDTO<CreateUserResponseDTO>> createUser(
+            @Valid @RequestBody CreateUserRequestDTO dto) {
         var request = service.createUser(dto);
         var response = new ApiResponseDTO<>(request, "create-user");
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{userId}/appointments")
-    public ApiResponseDTO<Map<String, List<AppointmentDTO>>> getAppointments(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponseDTO<Map<String, List<AppointmentDTO>>>> getAppointments(
+            @PathVariable Long userId) {
         var appointments = service.listAllUserAppointments(userId);
         var response = new ApiResponseDTO<>(appointments, "list-all-user-appointments");
-        return response;
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping
-    public ResponseEntity deleteUser(HttpServletRequest request) {
-        var userIdAttribute = request.getAttribute("user_id");
+    public ResponseEntity<Void> deleteUser(HttpServletRequest request) {
+        Object userIdAttribute = request.getAttribute("user_id");
         if (userIdAttribute == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
         String userIdStr = userIdAttribute.toString();
         Long userId = Long.parseLong(userIdStr);
+
         service.delete(userId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping
-    public ResponseEntity<ApiResponseDTO<UpdateUserResponseDTO>> updateUser(@RequestBody UpdateUserRequestDTO dto,
+    public ResponseEntity<ApiResponseDTO<UpdateUserResponseDTO>> updateUser(
+            @Valid @RequestBody UpdateUserRequestDTO dto,
             HttpServletRequest request) {
-        var userIdAttribute = request.getAttribute("user_id");
+
+        Object userIdAttribute = request.getAttribute("user_id");
         if (userIdAttribute == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
         String userIdStr = userIdAttribute.toString();
         Long userId = Long.parseLong(userIdStr);
+
         var user = service.update(dto, userId);
         var response = new ApiResponseDTO<>(user, "update-user");
         return ResponseEntity.ok(response);
     }
-
 }

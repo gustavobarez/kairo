@@ -9,13 +9,13 @@ import org.springframework.stereotype.Service;
 import br.com.gustavobarez.Kairo.User.User;
 import br.com.gustavobarez.Kairo.User.UserRepository;
 import br.com.gustavobarez.Kairo.User.UserResponseDTO;
-import jakarta.persistence.EntityNotFoundException;
+import br.com.gustavobarez.Kairo.exceptions.OperationNotAllowedException;
+import br.com.gustavobarez.Kairo.exceptions.ResourceNotFoundException;
 
 @Service
 public class AppointmentService {
 
     AppointmentRepository repository;
-
     UserRepository userRepository;
 
     public AppointmentService(AppointmentRepository repository, UserRepository userRepository) {
@@ -24,10 +24,11 @@ public class AppointmentService {
     }
 
     public AppointmentDTO createAppointment(AppointmentDTO dto, Long creatorId) {
-        var user = userRepository.findById(creatorId);
+        var user = userRepository.findById(creatorId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + creatorId));
 
         Appointment appointment = Appointment.builder()
-                .creator(user.get())
+                .creator(user)
                 .title(dto.title())
                 .description(dto.description())
                 .startTime(dto.startTime())
@@ -36,30 +37,37 @@ public class AppointmentService {
                 .build();
 
         repository.save(appointment);
-
         return dto;
     }
 
     public InviteAppointmentResponseDTO inviteUserToAppointment(Long appointmentId,
             InviteAppointmentRequestDTO inviteAppointmentDTO, Long creatorId) {
+
         if (appointmentId == null) {
             throw new IllegalArgumentException("Appointment ID cannot be null");
         }
 
-        if (inviteAppointmentDTO.usersId().isEmpty() || inviteAppointmentDTO.usersId() == null) {
-            throw new IllegalArgumentException("Users ID cannot be null");
+        if (inviteAppointmentDTO.usersId() == null || inviteAppointmentDTO.usersId().isEmpty()) {
+            throw new IllegalArgumentException("Users ID list cannot be null or empty");
         }
 
         var appointment = repository.findById(appointmentId)
-                .orElseThrow(() -> new EntityNotFoundException("Appointment not found with ID: " + appointmentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with ID: " + appointmentId));
+
+        if (!appointment.getCreator().getId().equals(creatorId)) {
+            throw new OperationNotAllowedException("Only the appointment creator can invite participants");
+        }
+
         var users = userRepository.findAllById(inviteAppointmentDTO.usersId());
 
-        if (appointment.getCreator().getId() != creatorId) {
-            throw new IllegalArgumentException("User ID needs to match with Appointment Creator ID");
+        if (users.size() != inviteAppointmentDTO.usersId().size()) {
+            throw new ResourceNotFoundException("One or more users not found");
         }
 
         for (User user : users) {
-            appointment.getParticipants().add(user);
+            if (!appointment.getParticipants().contains(user)) {
+                appointment.getParticipants().add(user);
+            }
         }
 
         repository.save(appointment);
@@ -88,19 +96,40 @@ public class AppointmentService {
         return response;
     }
 
-    public void deleteAppointment(Long appointmentId) {
-        var appointment = repository.findById(appointmentId).get();
+    public void deleteAppointment(Long appointmentId, Long userId) {
+        if (appointmentId == null) {
+            throw new IllegalArgumentException("Appointment ID cannot be null");
+        }
+
+        var appointment = repository.findById(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with ID: " + appointmentId));
+
+        if (!appointment.getCreator().getId().equals(userId)) {
+            throw new OperationNotAllowedException("Only the appointment creator can delete it");
+        }
+
         appointment.setDeletedAt(LocalDateTime.now());
         repository.save(appointment);
     }
 
-    public UpdateAppointmentResponseDTO updateAppointment(Long appointmentId, UpdateAppointmentRequestDTO dto) {
+    public UpdateAppointmentResponseDTO updateAppointment(Long appointmentId,
+            UpdateAppointmentRequestDTO dto, Long userId) {
 
-        if (dto.title() == null && dto.description() == null && dto.startTime() == null && dto.endTime() == null) {
-            throw new IllegalArgumentException("Title, Description, StartTime and EndTime cannot be null");
+        if (appointmentId == null) {
+            throw new IllegalArgumentException("Appointment ID cannot be null");
         }
 
-        var appointment = repository.findById(appointmentId).get();
+        if (dto.title() == null && dto.description() == null &&
+                dto.startTime() == null && dto.endTime() == null) {
+            throw new IllegalArgumentException("At least one field must be provided for update");
+        }
+
+        var appointment = repository.findById(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with ID: " + appointmentId));
+
+        if (!appointment.getCreator().getId().equals(userId)) {
+            throw new OperationNotAllowedException("Only the appointment creator can update it");
+        }
 
         if (dto.title() != null) {
             appointment.setTitle(dto.title());
@@ -119,13 +148,15 @@ public class AppointmentService {
         }
 
         appointment.setUpdatedAt(LocalDateTime.now());
-
         repository.save(appointment);
 
-        UpdateAppointmentResponseDTO response = new UpdateAppointmentResponseDTO(appointment.getId(), appointment.getTitle(), appointment.getDescription(),
-                appointment.getStartTime(), appointment.getEndTime());
+        UpdateAppointmentResponseDTO response = new UpdateAppointmentResponseDTO(
+                appointment.getId(),
+                appointment.getTitle(),
+                appointment.getDescription(),
+                appointment.getStartTime(),
+                appointment.getEndTime());
 
         return response;
     }
-
 }
