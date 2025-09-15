@@ -23,7 +23,7 @@ This project is an appointment scheduling API, built with Java 21 and Spring Boo
 
 To use this project, you need to follow these steps:
 
-1. Clone the repository: `git clone https://github.com/gustavobarez/b3-portfolio-manager.git`
+1. Clone the repository: `git clone https://github.com/gustavobarez/kairo.git`
 2. Install the dependencies: `mvn clean package`
 3. Run the application: `mvn spring-boot:run`
 
